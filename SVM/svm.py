@@ -7,15 +7,13 @@ from sklearn.neighbors import KNeighborsClassifier
 cancer = datasets.load_breast_cancer()
 
 # features and targets
-print(cancer.feature_names)
-print(cancer.target_names)
+#print(cancer.feature_names)
+#print(cancer.target_names)
 
 X = cancer.data
 Y = cancer.target
 
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, Y, test_size=0.2)
-
-print(x_train, y_train)
 
 # for making results more readable, i.e. 0, 1 to malignant, benign
 classes = ['malignant', 'benign']
@@ -31,3 +29,7 @@ y_pred = clf.predict(x_test)
 acc = metrics.accuracy_score(y_test, y_pred)
 
 print(acc)
+
+# compares predictions and actual data
+for x in range(len(y_pred)):
+    print("Predicted: ", classes[y_pred[x]], "Actual:", classes[y_test[x]])
