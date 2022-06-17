@@ -111,6 +111,7 @@ pyplot.subplot(1, 2, 2)
 plot_value_array(i, predictions[i], label_test)
 pyplot.show()
 
+# displaying first 15 testing examples and their results
 num_rows = 5
 num_cols = 3
 num_images = num_rows*num_cols
