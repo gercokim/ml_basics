@@ -34,7 +34,7 @@ train_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=
 valid_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 test_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
-train_data_gen = train_image_generator.flow_from_directory(train_dir, target_size=(IMG_HEIGHT,IMG_WIDTH),batch_size=BATCH_SIZE, class_mode='binary')
+train_data_gen = train_image_generator.flow_from_directory(train_dir, target_size=(IMG_HEIGHT,IMG_WIDTH),batch_size=BATCH_SIZE, shuffle=True, class_mode='binary')
 valid_data_gen = valid_image_generator.flow_from_directory(valid_dir, target_size=(IMG_HEIGHT,IMG_WIDTH),batch_size=BATCH_SIZE, class_mode='binary')
 test_data_gen = test_image_generator.flow_from_directory(test_dir, target_size=(IMG_HEIGHT,IMG_WIDTH),batch_size=BATCH_SIZE, shuffle=False, class_mode='binary')
 
@@ -42,7 +42,14 @@ sample_training_images, _ = next(train_data_gen)
 plot.plotImages(sample_training_images[:5])
 
 # Reducing the chances of overfitting by using random transformations
-train_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255, rotation_range=40, horizontal_flip=True, zoom_range=0.2, shear_range=0.2)
+train_image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
+      rotation_range=40,
+      width_shift_range=0.2,
+      height_shift_range=0.2,
+      shear_range=0.2,
+      zoom_range=0.2,
+      horizontal_flip=True,
+      fill_mode='nearest')
 
 # New data generator from new image generator
 train_data_gen = train_image_generator.flow_from_directory(train_dir, target_size=(IMG_HEIGHT,IMG_WIDTH),batch_size=BATCH_SIZE, class_mode='binary')
@@ -54,14 +61,15 @@ plot.plotImages(augmented_images)
 
 # Building the model
 model = tf.keras.Sequential([
-    tf.keras.layers.Conv2D(32, (3, 3), padding='same', activation=tf.nn.relu, input_shape=(150, 150, 3)),
+    tf.keras.layers.Conv2D(32, (3, 3), activation=tf.nn.relu, input_shape=(150, 150, 3)),
     tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Conv2D(64, (3, 3), padding='same', activation=tf.nn.relu),
+    tf.keras.layers.Conv2D(64, (3, 3), activation=tf.nn.relu),
     tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+    tf.keras.layers.Conv2D(128, (3,3), activation=tf.nn.relu),
     tf.keras.layers.MaxPooling2D(2,2),
-    tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
+    tf.keras.layers.Conv2D(128, (3,3), activation=tf.nn.relu),
     tf.keras.layers.MaxPooling2D(2,2),
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(512, activation=tf.nn.relu),
     tf.keras.layers.Dense(2, activation=tf.nn.softmax)
@@ -74,7 +82,7 @@ model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentro
 history = model.fit(train_data_gen, epochs=epochs, steps_per_epoch=int(np.ceil(num_train / float(BATCH_SIZE))), validation_data=valid_data_gen, validation_steps=int(np.ceil(num_val / float(BATCH_SIZE))))
 
 # Saving model in models folder
-#model.save('models')
+model.save('models\cats_v_dogs.h5')
 
 # Visualizing accuracy and loss
 acc = history.history['accuracy']
