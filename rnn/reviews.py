@@ -32,9 +32,12 @@ model = tf.keras.Sequential([
 # Compiling the model
 model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=['accuracy'])
 
-# Training the model
+# Training the model - Note that the model overfits to the training data
 history = model.fit(train_data, train_labels, epochs=10, validation_split=0.2)
 
 # Evaluating results on test data
 results = model.evaluate(test_data, test_labels)
 print(results)
+
+# Saving the model
+model.save("rnn\models\mov_reviews.h5")
