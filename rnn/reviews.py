@@ -15,7 +15,7 @@ BATCH_SIZE = 64
 (train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=VOCAB_SIZE)
 
 # An example of a review
-print(train_data[0])
+#print(train_data[0])
 
 # Preprocessing - Making every review same length (250 words) in order for fixed input layer size
 train_data = pad_sequences(train_data, MAX_LEN)
