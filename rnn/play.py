@@ -38,4 +38,36 @@ def int_to_text(ints):
         pass
     return ''.join(idx2char[ints])
 
-print(int_to_text(text_as_int[5:7]))
+print(int_to_text(text_as_int[:10]))
+
+# Creating training examples
+# Each training example will use a sequence as input and outputs the same sequence shifted to the right by one letter
+# EX: input: Hell | output: ello
+seq_length = 100
+examples_per_epoch = len(text)//(seq_length+1)
+
+# Creating training dataset / stream of chars
+char_dataset = tf.data.Dataset.from_tensor_slices(text_as_int)
+
+# Creating batches of length 101 from dataset
+sequences = char_dataset.batch(seq_length+1, drop_remainder=True)
+
+# Splitting sequences of 101 into input and output
+def split_input_target(chunk):
+    input_text = chunk[:-1] # hell
+    target_text = chunk[1:] # ello
+    return input_text, target_text
+
+# Transforms each batch within the dataset into input:output
+dataset = sequences.map(split_input_target)
+
+# Hyperparameters and making training batches
+BATCH_SIZE = 64
+VOCAB_SIZE = len(vocab)
+EMBEDDING_DIM = 256
+RNN_UNITS = 1024
+
+# Buffer size to shuffle dataset
+BUFFER_SIZE = 10000
+
+data = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
