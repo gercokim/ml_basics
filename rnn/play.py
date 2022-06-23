@@ -71,3 +71,79 @@ RNN_UNITS = 1024
 BUFFER_SIZE = 10000
 
 data = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
+
+# Building the model - we use a function to create different models with different parameters, specifically batch_size
+def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Embedding(vocab_size, embedding_dim, batch_input_shape=[batch_size, None]),
+        tf.keras.layers.LSTM(rnn_units, return_sequences=True, recurrent_initializer='glorot_uniform'),
+        tf.keras.layers.Dense(vocab_size)
+    ])
+    return model
+
+model = build_model(VOCAB_SIZE, EMBEDDING_DIM, RNN_UNITS, BATCH_SIZE)
+
+# Creating a loss function because TF does not have a built in loss function that analyzes 3D nested array of probabilities
+def loss(labels, logits):
+    return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
+
+# Compiling the model
+model.compile(optimizer='adam', loss=loss)
+
+# Saving checkpoints as the model trains
+# Directory where the checkpoints will be saved
+checkpoint_dir = 'rnn\_training_checkpoints'
+# Name of the checkpoint files
+checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
+
+checkpoint_callback=tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_prefix,
+    save_weights_only=True)
+
+history = model.fit(data, epochs=50, callbacks=[checkpoint_callback])
+
+# Saving the model
+#model.save('rnn\models\play_model.h5')
+
+# Rebuilding the model with batch_size = 1, so we can input one piece of text
+model = build_model(VOCAB_SIZE, EMBEDDING_DIM, RNN_UNITS, batch_size=1)
+
+# Find the latest checkpoint that stores the models weights from previous training
+model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
+model.build(tf.TensorShape([1, None]))
+
+# Generating text from any string
+def generate_text(model, start_string):
+    # Number of characters to generate
+    num_generate = 800
+
+    # Preprocessing input text
+    input_eval = [char2idx[s] for s in start_string]
+    input_eval = tf.expand_dims(input_eval, 0)
+
+    # Empty string to store results
+    text_generated = []
+
+    # Lower temp => more predictable text
+    # Higher temp => more surprising text
+    temperature = 1.0
+
+    model.reset_states()
+    for i in range(num_generate):
+        predictions = model(input_eval)
+        
+        # Flattens batch list
+        predictions = tf.squeeze(predictions, 0)
+
+        # Uses categorical distribution to predict character from model
+        predictions = predictions/temperature
+        pred_id = tf.random.categorical(predictions, num_samples=1)[-1, 0].numpy()
+
+        # Add predicted char to next input to the model
+        input_eval = tf.expand_dims([pred_id], 0)
+        text_generated.append(idx2char[pred_id])
+    return (start_string + ''.join(text_generated))
+
+inp = input("Type a starting string: ")
+print(generate_text(model, inp))
+
