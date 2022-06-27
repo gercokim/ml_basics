@@ -38,5 +38,13 @@ def test_predictions():
 
 test_predictions()
 
-inp = input("Type in a text: ")
-print("This message is: ", predict_message(inp))
+cont = True
+while cont:
+    inp = input("Type in a text: ")
+    print("This message is: ", predict_message(inp))
+
+    inp1 = input("Would you like to continue (y/n?")
+    if inp1 == "y":
+        pass
+    else:
+        cont = False
