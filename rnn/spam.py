@@ -5,8 +5,12 @@ import numpy as np
 import matplotlib as plt
 
 # Retrieving file paths of data
-train_file_path = 'rnn\data\itrain-data.tsv'
-test_file_path = 'rnn\data\ivalid-data.tsv'
+# train_file_path = 'rnn\data\itrain-data.tsv'
+# test_file_path = 'rnn\data\ivalid-data.tsv'
+
+# For Mac OS
+train_file_path = 'data/itrain-data.tsv'
+test_file_path = 'data/ivalid-data.tsv'
 
 # Loading data into dataframes 
 # Col 0 = label, Col 1 = feature data
@@ -14,16 +18,37 @@ train_df = pd.read_table(train_file_path, header=None)
 test_df = pd.read_table(test_file_path, header=None)
 #print(train_df.head())
 #print(test_df.head())
-print(train_df.count(), test_df.count())
+print(train_df.to_numpy().size, test_df.to_numpy().size)
 
+# Some hyperparameters
 BUFFER_SIZE = 500
 BATCH_SIZE = 64
+SEED = 42
+VOCAB_SIZE = 2000
 
+# Converting train examples/labels into numpy arrays
 train_example = train_df.pop(1).to_numpy()
 train_label = train_df.pop(0).to_numpy()
 
 print(train_example)
 print(train_label)
+
+test_example = test_df.pop(1).to_numpy()
+test_label = test_df.pop(0).to_numpy()
+
+# Converting test+train example/label numpy arrays into tfds
+train_dataset = tf.data.Dataset.from_tensor_slices((train_example, train_label))
+test_dataset = tf.data.Dataset.from_tensor_slices((train_example, train_label))
+
+# Shuffling and batching datasets
+train_dataset = train_dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+# Seeing the training data
+for example, label in train_dataset.take(1):
+  print('texts: ', example.numpy()[:3])
+  print()
+  print('labels: ', label.numpy()[:3])
 
 
 
@@ -56,5 +81,5 @@ def test_predictions():
   else:
     print("Tests have failed")
 
-test_predictions()
+#test_predictions()
 
